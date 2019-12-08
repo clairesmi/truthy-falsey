@@ -3,37 +3,24 @@ import React, { Component } from 'react';
 import axios from 'axios'
 import Speech from 'react-speech'
 import SpeechRecognition from "react-speech-recognition"
-import PropTypes from "prop-types"
 
-// const SpeechRecognition = SpeechRecognition || webkitSpeechRecognition
-const recognition = new SpeechRecognition()
+const SpeechRec =  window.webkitSpeechRecognition
+const recognition = new SpeechRec()
+console.log(new SpeechRec)
 
 recognition.continous = true
 recognition.interimResults = true
-recognition.lang = 'en-GB'
-
-const propTypes = {
-  // Props injected by SpeechRecognition
-  transcript: PropTypes.string,
-  resetTranscript: PropTypes.func,
-  browserSupportsSpeechRecognition: PropTypes.bool
-}
-
-const Dictaphone = ({
-  // transcript,
-  // resetTranscript,
-  // browserSupportsSpeechRecognition
-})
+recognition.lang = 'en-US'
 
 class App extends Component {
 
 state = {
   questions: null,
   levelChosen: 'Any',
-  transcript: null,
-  resetTranscript: null,
-  browserSupportsSpeechRecognition: true,
-  listening: false
+  listening: true,
+  interimTranscript: '',
+  finalTranscript: '',
+  count: 0
 }
 
 componentDidMount = async () => {
@@ -54,31 +41,61 @@ filteredLevels = () => {
   } )
 }
 
-onClick = () => {
-  this.toggleListen()
-}
-
 toggleListen = () => {
-  this.setState = ({ listening: !this.state.listening }, this.handleListen)
+  this.setState = ({ listening: !this.state.listening })
+  console.log(this.state.listening)
+  this.handleListen()
 }
 
 handleListen = () => {
+  console.log('also listening')
 
-} 
+  if (this.state.listening) {
+    recognition.start()
+    recognition.onend = () => recognition.start()
+  } else {
+    recognition.end()
+  }
 
+  let finalTranscript = ''
+  recognition.onresult = (e) => {
+    let interimTranscript = ''
+  for (let i = e.resultIndex; i < e.results.length; i++) {
+    const transcript = e.results[i][0].transcript;
+    if (e.results[i].isFinal) finalTranscript += transcript + ' ';
+    else interimTranscript += transcript;
+    }
+    this.setState = ({ interimTranscript })
+    this.setState = ({ finalTranscript })
+    document.getElementById('interim').innerHTML = interimTranscript
+    document.getElementById('final').innerHTML = finalTranscript 
+    // console.log(interimTranscript, finalTranscript)
+
+    const finalTranscriptArr = finalTranscript.split(' ')
+    const stopListening = finalTranscriptArr.slice(-3, -1) 
+    console.log('stop listening', stopListening)
+
+    if (stopListening[0] === 'stop' && stopListening[1] === 'listening' || this.state.listening === false) {
+      recognition.stop()
+      recognition.onend = () => {
+        console.log('i have stopped listening')
+        const finalText = finalTranscriptArr.slice(0, -3).join(' ')
+        document.getElementById('final').innerHTML = finalText
+      }
+    } 
+  }
+  recognition.onerror = event => {
+    console.log("Error occurred in recognition: " + event.error)
+  }
+}
 
 render () {
 
   if (!this.state.questions) return null
   const questions = this.state.questions.results
-  // console.log(this.filteredLevels()[Math.floor(Math.random() * this.filteredLevels().length)])
+  const { interimTranscript, finalTranscript } = this.state
   const randomQuestion = this.filteredLevels()[Math.floor(Math.random() * this.filteredLevels().length)]
-  console.log(this.state.transcript)
 
-    if (!this.state.browserSupportsSpeechRecognition) {
-      return null;
-    }
-  
   return (
     <div className="App">
       <header className="App-header">
@@ -90,8 +107,19 @@ render () {
         <button type="button" onClick={this.handleClick} name="levelChosen" value="medium">Medium</button>
         <button type="button" onClick={this.handleClick} name="levelChosen" value="hard">Hard</button>
         <button type="button" onClick={this.handleClick} name="levelChosen" value="Any">Any</button>
-      </div>
+      </div> 
       <div className="question">
+        <>
+      {randomQuestion.type === 'boolean' &&
+      <>
+      <h3>True or False</h3>
+      <Speech 
+      text="True or False"
+      voice="Google UK English Female"
+      textAsButton={true}
+      resume={true} 
+      styles={this.style}
+      />
       <Speech 
       text={randomQuestion.question}
       voice="Google UK English Female"
@@ -99,14 +127,35 @@ render () {
       resume={true} 
       styles={this.style}
       />
+      </>}
+      {randomQuestion.type === 'multiple' &&
+        <>
+        <h3>Multiple Choice</h3>
+        <Speech 
+        text="Multiple Choice"
+        voice="Google UK English Female"
+        textAsButton={true}
+        resume={true} 
+        styles={this.style}
+        />
+        <Speech 
+        text={randomQuestion.question}
+        voice="Google UK English Female"
+        textAsButton={true}
+        resume={true} 
+        styles={this.style}
+        />
+        </>
+      }
+      </>
       </div>
       <div>
       <button onClick={this.resetTranscript}>Reset</button>
       <span>{this.transcript}</span>
       <div style={container}>
         <button id='microphone-btn' style={button} onClick={this.toggleListen} />
-        <div id='interim' style={interim}></div>
-        <div id='final' style={final}></div>
+        <div id='interim' style={interim}>{interimTranscript} </div>
+        <div id='final' style={final}>{finalTranscript}</div>
       </div>
     </div>
     </div>
@@ -117,10 +166,8 @@ render () {
 
 }
 
-// Dictaphone.propTypes = propTypes;
-
-// export default SpeechRecognition(Dictaphone)
 export default App
+
 
 // --------------- CSS ---------------
 
