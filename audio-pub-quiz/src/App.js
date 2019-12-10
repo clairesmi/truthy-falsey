@@ -1,8 +1,19 @@
+// To do 
+// write points count logic with voice rec
+// put all answers into 1 array (new Set or concat)
+// write win conditions 
+// write voice selector for level 
+
+// Extras:
+// write category selector
+
 import React, { Component } from 'react';
 // import './App.css';
 import axios from 'axios'
-import Speech from 'react-speech'
+// import Speech from 'react-speech'
 import SpeechRecognition from "react-speech-recognition"
+import Questions from './quiz/Questions'
+import Answers from './quiz/Answers'
 
 const SpeechRec =  window.webkitSpeechRecognition
 const recognition = new SpeechRec()
@@ -20,20 +31,25 @@ state = {
   listening: true,
   interimTranscript: '',
   finalTranscript: '',
-  count: 0
+  count: 0,
+  answerChosen: '',
 }
 
 componentDidMount = async () => {
-  let res = await axios.get('https://opentdb.com/api.php?amount=50')
+  const res = await axios.get('https://opentdb.com/api.php?amount=50')
+  // res.replace(/&quot;/g,'"')
   this.setState({ questions: res.data.results })
   console.log(res.data.results)
+  // add in try and catch for error handling
 }
 
+// HANDLE CLICK FOR SELECTING LEVELS
 handleClick = (e) => {
  this.setState({ [e.target.name]: e.target.value })
-//  console.log(e.target.value)
+ console.log(e.target.value)
 }
 
+// FILTER FOR LEVELS 
 filteredLevels = () => {
   const { questions, levelChosen } = this.state
   return questions.filter(question => {
@@ -41,12 +57,32 @@ filteredLevels = () => {
   } )
 }
 
+// Fisher-Yates shuffling algorithm to shuffle multiple choice options
+// It randomly picks out options until there are none left and sets them in the array of randomOptions
+randomOptions = (options) => {
+  let i = 0
+  let j = 0
+  let temp = 0
+  for (let i = options.length - 1; i > 0; i--) {
+      j = Math.floor(Math.random() * (i + 1))
+      temp = options[i] // sets temp to last item in array
+      // console.log(temp)
+      options[i] = options[j] // sets options[i] to options[j] which is random multiplied by the length of the array minus 1
+      // console.log(options[i])
+      options[j] = temp // sets options[j] to temp to set random order
+      // console.log(options[j])
+  }
+  return options
+}
+// randomOptions()
+// TOGGLE LISTEN TO HANDLE CLICK ON LISTEN BUTTON
 toggleListen = () => {
   this.setState = ({ listening: !this.state.listening })
   console.log(this.state.listening)
   this.handleListen()
 }
 
+// HANDLE LISTEN FUNCTION FOR ACTIONS TO TAKE WHILST LISTENING 
 handleListen = () => {
   console.log('also listening')
 
@@ -90,12 +126,17 @@ handleListen = () => {
 }
 
 render () {
-
   if (!this.state.questions) return null
-  const questions = this.state.questions.results
+  const questions = this.state.questions
   const { interimTranscript, finalTranscript } = this.state
   const randomQuestion = this.filteredLevels()[Math.floor(Math.random() * this.filteredLevels().length)]
+  // console.log(questions)
 
+  const options = randomQuestion.incorrect_answers.concat(randomQuestion.correct_answer)
+  // console.log(options)
+  const randomOptions = this.randomOptions(options)
+  
+  // console.log(randomOptions)
   return (
     <div className="App">
       <header className="App-header">
@@ -108,47 +149,17 @@ render () {
         <button type="button" onClick={this.handleClick} name="levelChosen" value="hard">Hard</button>
         <button type="button" onClick={this.handleClick} name="levelChosen" value="Any">Any</button>
       </div> 
-      <div className="question">
-        <>
-      {randomQuestion.type === 'boolean' &&
-      <>
-      <h3>True or False</h3>
-      <Speech 
-      text="True or False"
-      voice="Google UK English Female"
-      textAsButton={true}
-      resume={true} 
-      styles={this.style}
+      <Questions 
+      randomQuestion={randomQuestion}
+      styles={styles}
       />
-      <Speech 
-      text={randomQuestion.question}
-      voice="Google UK English Female"
-      textAsButton={true}
-      resume={true} 
-      styles={this.style}
+      <Answers
+      randomQuestion={randomQuestion}
+      styles={styles}
+      questions={questions}
+      randomOptions={randomOptions}
+      handleClick={this.handleClick}
       />
-      </>}
-      {randomQuestion.type === 'multiple' &&
-        <>
-        <h3>Multiple Choice</h3>
-        <Speech 
-        text="Multiple Choice"
-        voice="Google UK English Female"
-        textAsButton={true}
-        resume={true} 
-        styles={this.style}
-        />
-        <Speech 
-        text={randomQuestion.question}
-        voice="Google UK English Female"
-        textAsButton={true}
-        resume={true} 
-        styles={this.style}
-        />
-        </>
-      }
-      </>
-      </div>
       <div>
       <button onClick={this.resetTranscript}>Reset</button>
       <span>{this.transcript}</span>
