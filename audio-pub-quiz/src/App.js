@@ -13,14 +13,14 @@ import React, { Component } from 'react';
 // import './App.css';
 import axios from 'axios'
 // import Speech from 'react-speech'
-import SpeechRecognition from "react-speech-recognition"
+// import SpeechRecognition from "react-speech-recognition"
 import Questions from './quiz/Questions'
 import Answers from './quiz/Answers'
 import ScoreConditions from './quiz/ScoreConditions';
 
-const SpeechRec =  window.webkitSpeechRecognition
+const SpeechRec = window.webkitSpeechRecognition
 const recognition = new SpeechRec()
-console.log(new SpeechRec)
+// console.log(new SpeechRec)
 
 recognition.continous = true
 recognition.interimResults = true
@@ -31,22 +31,32 @@ class App extends Component {
 state = {
   questions: null,
   levelChosen: 'Any',
-  listening: true,
+  listening: false,
   interimTranscript: '',
   finalTranscript: '',
   count: 0,
   answerChosen: '',
-  questionCounter: 1
+  answerSpoken: '',
+  questionCounter: 1,
+  gameFinished: false
 }
+
+
+
 
 componentDidMount = async () => {
-  const res = await axios.get('https://opentdb.com/api.php?amount=50')
-  // res.replace(/&quot;/g,'"')
+  try {
+    const res = await axios.get('https://opentdb.com/api.php?amount=50')
   this.setState({ questions: res.data.results })
-  console.log(res.data.results)
-  // add in try and catch for error handling
-}
+  // console.log(res.data.results)
+    } catch(e) {
+    console.log(e)
+    }
+  }
 
+// generateQuestion = () => {
+//   this.componentDidMount()
+// }
 
 // HANDLE CLICK FOR SELECTING LEVELS AND ANSWERS
 handleClick = (e) => {
@@ -83,22 +93,32 @@ randomOptions = (options) => {
       // console.log(options[j])
   }
   return options
+  // WORKING ON A REDUCE FUNCTION TO REPLACE THIS
+
   // const rand = options[Math.floor(Math.random() * options.length)]
   // return options.reduce((acc, rand) => acc.includes(rand) ? acc : [...acc, rand])
 }
-// randomOptions()
-// TOGGLE LISTEN TO HANDLE CLICK ON LISTEN BUTTON
-toggleListen = () => {
-  this.setState = ({ listening: !this.state.listening })
-  console.log(this.state.listening)
+
+toggleListen = async (e) => {
+  e.preventDefault()
   this.handleListen()
 }
 
+toggleStopListening = async (e) => {
+  e.preventDefault()
+  this.stopListening()
+  this.setState({ listening: !this.state.listening})
+  this.setState(({questionCounter}) => ({questionCounter: questionCounter + 1}))
+  this.answerCheck()
+  // window.location.reload()
+}
+
 // HANDLE LISTEN FUNCTION FOR ACTIONS TO TAKE WHILST LISTENING 
-handleListen = () => {
+handleListen = async (e) => {
+  await this.setState({listening: true})
   console.log('also listening')
 
-  if (this.state.listening) {
+  if (this.state.listening === true) {
     recognition.start()
     recognition.onend = () => recognition.start()
   } else {
@@ -110,48 +130,71 @@ handleListen = () => {
     let interimTranscript = ''
   for (let i = e.resultIndex; i < e.results.length; i++) {
     const transcript = e.results[i][0].transcript;
+    // console.log(transcript)
     if (e.results[i].isFinal) finalTranscript += transcript + ' ';
     else interimTranscript += transcript;
     }
-    this.setState = ({ interimTranscript })
-    this.setState = ({ finalTranscript })
+    this.setState({ interimTranscript })
+    this.setState({ answerSpoken: finalTranscript })
     document.querySelector('#interim').innerHTML = interimTranscript
     document.querySelector('#final').innerHTML = finalTranscript 
-    // console.log(interimTranscript, finalTranscript)
 
     const finalTranscriptArr = finalTranscript.split(' ')
-    const stopListening = finalTranscriptArr.slice(-3, -1) 
-    console.log('stop listening', stopListening)
-
-    if (stopListening[0] === 'stop' && stopListening[1] === 'listening' || this.state.listening === false) {
-      recognition.stop()
-      recognition.onend = () => {
-        console.log('i have stopped listening')
-        const finalText = finalTranscriptArr.slice(0, -3).join(' ')
-        document.querySelector('#final').innerHTML = finalText
-      }
-    } 
+    const finalText = finalTranscriptArr.join(' ')
+    // console.log(finalText)
+    document.querySelector('#final').innerHTML = finalText
   }
   recognition.onerror = event => {
     console.log("Error occurred in recognition: " + event.error)
   }
 }
 
+stopListening = (e) => {
+  // PREVIOUS CODE DURING TEST - USING VOICE TO DEACTIVATE SPEECH RECOGNITION
+  // if (!this.state.listening) {
+    // (stopListening[0] === 'stop' && stopListening[1] === 'listening' || this.state.listening === false) 
+      recognition.stop()
+      recognition.onend = () => {
+        console.log('i have stopped listening')
+    } 
+    recognition.onerror = event => {
+      console.log("Error occurred in recognition: " + event.error)
+    }
+}
+
+// checks for end of game
+answerCheck = () => {
+  this.setState(({ counter }) => ({ counter: counter + 1}))
+  if (this.state.questionCounter === 2) {
+    // this.endOfGame()
+    this.setState(({ gameFinished }) => ({ gameFinished: !gameFinished }))
+    console.log('SIX')
+    console.log('game in play', this.state.gameFinished)
+    this.endOfGame()
+  }
+}
+
+endOfGame = () => {
+  console.log('end of game function runs here')
+}
+
 render () {
   if (!this.state.questions) return null
-  const questions = this.state.questions
-  const { interimTranscript, finalTranscript, answerChosen, questionCounter } = this.state
-  const randomQuestion = this.filteredLevels()[Math.floor(Math.random() * this.filteredLevels().length)]
-  // console.log(questions)
 
+  const questions = this.state.questions
+  const { interimTranscript, finalTranscript, answerChosen, answerSpoken, questionCounter, listening, gameFinished } = this.state
+  const randomQuestion = this.filteredLevels()[Math.floor(Math.random() * this.filteredLevels().length)]
   const options = randomQuestion.incorrect_answers.concat(randomQuestion.correct_answer)
-  // console.log(options)
   const randomOptions = this.randomOptions(options)
+
+  console.log(gameFinished)
   
   return (
     <div className="App-wrap">
+      {!gameFinished &&
+        <div className="hidden">
       <header className="App-header" style={container}>
-      <h1>Claire's Pub Quiz</h1>
+      <h1>Claire's Quiz</h1>
       </header>
       <div className="difficulty" style={container}>
         <h2>Choose Difficulty</h2>
@@ -160,22 +203,29 @@ render () {
         <button type="button" onClick={this.handleClick} name="levelChosen" value="hard">Hard</button>
         <button type="button" onClick={this.handleClick} name="levelChosen" value="Any">Any</button>
       </div> 
+      <div>Generate a question
+      {/* <button type="button" onClick={this.generateQuestion} name="questionGenerated">Give me a question!</button> */}
+      </div>
       <div className="questions_wrapper" style={questions_wrapper}>
         <div className="question_options" style={question_options}>
       <div className="questions" style={inner_elements}>
       <Questions 
       randomQuestion={randomQuestion}
+      randomOptions={randomOptions}
+      listening={listening}
       // styles={styles}
       />
       </div>
 
       <div className="answers" style={inner_elements}>
       <Answers
+      listening={listening}
       randomQuestion={randomQuestion}
       // styles={styles}
       questions={questions}
       randomOptions={randomOptions}
       handleClick={this.handleAnswerClick}
+      handleListen={this.handleListen}
       />
       </div>
     </div>
@@ -184,11 +234,17 @@ render () {
       <ScoreConditions
       randomQuestion={randomQuestion}
       // styles={styles}
+      gameFinished={gameFinished}
       questions={questions}
       randomOptions={randomOptions}
-      handleClick={this.handleAnswerClick}
       answerChosen={answerChosen}
+      answerSpoken={answerSpoken}
       questionCounter={questionCounter}
+      finalTranscript={finalTranscript}
+      listening={listening}
+      generateQuestion={this.generateQuestion}
+      toggleStopListening={this.toggleStopListening}
+      handleClick={this.handleAnswerClick}
       endOfGame={this.endOfGame}
       />
       </div>
@@ -198,12 +254,20 @@ render () {
       </div>
       <span>{this.transcript}</span>
       <div>
-        <button id='microphone-btn' style={button} onClick={this.toggleListen} />
+        <button id='microphone-btn' style={button} onClick={this.toggleListen}>START</button>
+        <button id='microphone-btn' style={button} onClick={this.toggleStopListening}>STOP</button>
         <div id='interim' style={interim}>{interimTranscript} </div>
         <div id='final' style={final}>{finalTranscript}</div>
       </div>
     </div>
   </div>
+  </div>
+}
+{gameFinished &&
+<div>
+  Game is finished
+</div>
+}
 </div>
     )
   }
@@ -274,7 +338,11 @@ const styles = {
     padding: '1em',
     margin: '1em',
     width: '300px'
+  },
+
+  hidden: {
+    display: 'none'
   }
 }
 
-const { container, button, interim, final, questions_wrapper, inner_elements, question_options, score_speech_rec } = styles
+const { container, button, interim, final, questions_wrapper, inner_elements, question_options, score_speech_rec, hidden } = styles

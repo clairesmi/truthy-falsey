@@ -1,8 +1,10 @@
-import React, { Component } from 'react'
+import React from 'react'
 import Speech from 'react-speech'
 
-const Questions = ({ randomQuestion, styles }) => (
+const Questions = ({ randomQuestion, styles, listening }) => (
+  
   <div className="question">
+    {!listening &&
   <>
 {randomQuestion.type === 'boolean' &&
 <div id="container">
@@ -14,13 +16,16 @@ textAsButton={true}
 resume={true} 
 // style={styles}
 />
+
 <Speech 
 text={randomQuestion.question.replace(/&quot;/g, '"').replace(/&#039;/g, "'").replace(/&eacute;/g, 'é').replace(/&amp;/g, '&')}
 voice="Google UK English Female"
 textAsButton={true}
 resume={true} 
 style={styles}
+
 />
+
 </div>}
 {randomQuestion.type === 'multiple' &&
   <div id="container">
@@ -42,6 +47,9 @@ style={styles}
   </div>
 }
 </>
+}
+
+
 </div>
 )
 
