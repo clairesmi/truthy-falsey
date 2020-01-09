@@ -7,8 +7,8 @@ const Questions = ({ randomQuestion, styles, listening }) => (
     {!listening &&
   <>
 {randomQuestion.type === 'boolean' &&
-<div id="container">
-<h3>True or False</h3>
+<div id="container" style={container}>
+{/* <h3>True or False</h3> */}
 <Speech 
 text="True or False"
 voice="Google UK English Female"
@@ -28,7 +28,7 @@ style={styles}
 
 </div>}
 {randomQuestion.type === 'multiple' &&
-  <div id="container">
+  <div id="container" style={container}>
   <h3>Multiple Choice</h3>
   <Speech 
   text="Multiple Choice"
@@ -54,3 +54,17 @@ style={styles}
 )
 
 export default Questions
+
+const styles = {
+  container: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    margin: '10px',
+    // paddingLeft: '50px' 
+    }
+
+
+  }
+
+const {container} = styles

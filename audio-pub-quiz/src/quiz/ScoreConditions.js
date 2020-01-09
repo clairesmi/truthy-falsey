@@ -47,9 +47,13 @@ updateScore = () => {
 render () {
   const { counter, currentQuestion, currentOptions, currentAnswer, score } = this.state 
   const { questionCounter, answerChosen, answerSpoken, randomQuestion} = this.props 
+  console.log(currentQuestion)
   return (
     <>
     <div>
+    <p>
+  Question number: {questionCounter}
+  </p>
 <p>{randomQuestion.correct_answer
 .replace(/&quot;/g, '"').replace(/&#039;/g, "'").replace(/&eacute;/g, 'é').replace(/&amp;/g, '&')} - CORRECT ANSWER</p>
 
@@ -58,11 +62,7 @@ render () {
   <p>
   {/* {counter} / 5 */}
   </p>
-
-  <p>
-  Question number: {questionCounter}
-  </p>
-<div>
+  <div>
   <p>
      current answer is: {currentAnswer}
   </p>
@@ -70,15 +70,17 @@ render () {
   my answer is: {answerSpoken.toLowerCase()} 
   </p>
   <p>
-  did answers match? / your score is: {score}
+  {/* did answers match?  */}
+  SCORE: {score}
   {/* {answerSpoken.toLowerCase().trim() === this.state.currentAnswer.trim() ? 'true' : 'false'}  */}
   </p>
 </div>
-<p>{currentQuestion.question ? currentQuestion.question.replace(/&quot;/g, '"').replace(/&#039;/g, "'").replace(/&eacute;/g, 'é').replace(/&amp;/g, '&') : null}</p>
+<p>{currentQuestion.question ? 
+currentQuestion.question.replace(/&quot;/g, '"').replace(/&#039;/g, "'").replace(/&eacute;/g, 'é').replace(/&amp;/g, '&') : null}</p>
 <p>{currentOptions}</p>
 </div>
     </>
-  )
+    )
   }
 }
 

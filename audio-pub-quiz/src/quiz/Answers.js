@@ -5,7 +5,7 @@ import Speech from 'react-speech'
 const Answers = ({ questions, randomQuestion, randomOptions, handleClick, handleListen, listening }) => (
   <div>
   {!listening &&
-  <div>
+  <div className="options" style={options}>
   Options:
 {randomOptions.map(randomOption => 
     <Speech type="button" 
@@ -15,6 +15,7 @@ const Answers = ({ questions, randomQuestion, randomOptions, handleClick, handle
     onClick={handleClick}
     text={randomOption.replace(/&quot;/g, '"').replace(/&#039;/g, "'").replace(/&eacute;/g, 'é').replace(/&amp;/g, '&')}
     textAsButton={true}
+    style={optionButtons}
     // displayText={'text'}
     />
   )}
@@ -24,3 +25,20 @@ const Answers = ({ questions, randomQuestion, randomOptions, handleClick, handle
 )
 
 export default Answers
+
+const styles = {
+  options: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    margin: '30px 0px 0px 10px',
+    // margin: '10px', 
+  },
+  optionButtons: {
+    display: 'flex',
+    justifyContent: 'center',
+  },
+}
+
+const {options, optionButtons} = styles

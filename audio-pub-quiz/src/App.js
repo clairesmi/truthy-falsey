@@ -1,13 +1,7 @@
 // To do 
-// write points count logic with voice rec
-// put all answers into 1 array (new Set or concat)
-// write win conditions 
-// write voice selector for level 
 
-// build end screen
-
-// Extras:
-// write category selector
+// Move component did update and everything related into App.js so currentQuestion.question
+// can be passed to Questions.js and displayed instead of randomQ
 
 import React, { Component } from 'react';
 // import './App.css';
@@ -41,12 +35,9 @@ state = {
   gameFinished: false
 }
 
-
-
-
 componentDidMount = async () => {
   try {
-    const res = await axios.get('https://opentdb.com/api.php?amount=50')
+    const res = await axios.get('https://opentdb.com/api.php?amount=50&type=boolean')
   this.setState({ questions: res.data.results })
   // console.log(res.data.results)
     } catch(e) {
@@ -136,8 +127,12 @@ handleListen = async (e) => {
     }
     this.setState({ interimTranscript })
     this.setState({ answerSpoken: finalTranscript })
-    document.querySelector('#interim').innerHTML = interimTranscript
-    document.querySelector('#final').innerHTML = finalTranscript 
+    // document.querySelector('#interim').innerHTML = interimTranscript
+    if (this.state.finalTranscript) { 
+      document.querySelector('#final').innerHTML = finalTranscript
+    } else {
+      return
+    }
 
     const finalTranscriptArr = finalTranscript.split(' ')
     const finalText = finalTranscriptArr.join(' ')
@@ -165,17 +160,16 @@ stopListening = (e) => {
 // checks for end of game
 answerCheck = () => {
   this.setState(({ counter }) => ({ counter: counter + 1}))
-  if (this.state.questionCounter === 2) {
+  if (this.state.questionCounter === 4) {
     // this.endOfGame()
     this.setState(({ gameFinished }) => ({ gameFinished: !gameFinished }))
     console.log('SIX')
     console.log('game in play', this.state.gameFinished)
-    this.endOfGame()
   }
 }
 
-endOfGame = () => {
-  console.log('end of game function runs here')
+handleReset = () => {
+  window.location.reload()
 }
 
 render () {
@@ -190,22 +184,21 @@ render () {
   console.log(gameFinished)
   
   return (
-    <div className="App-wrap">
+    <div className="app-wrap" style={appWrap}>
       {!gameFinished &&
         <div className="hidden">
       <header className="App-header" style={container}>
-      <h1>Claire's Quiz</h1>
+      <h1>Truthy or Falsey?</h1>
       </header>
       <div className="difficulty" style={container}>
         <h2>Choose Difficulty</h2>
-        <button type="button" onClick={this.handleClick} name="levelChosen" value="easy">Easy</button>
-        <button type="button" onClick={this.handleClick} name="levelChosen" value="medium">Medium</button>
-        <button type="button" onClick={this.handleClick} name="levelChosen" value="hard">Hard</button>
-        <button type="button" onClick={this.handleClick} name="levelChosen" value="Any">Any</button>
+        <div className="difficulty-buttons"> 
+        <button style={difficulty} type="button" onClick={this.handleClick} name="levelChosen" value="easy">Easy</button>
+        <button style={difficulty} type="button" onClick={this.handleClick} name="levelChosen" value="medium">Medium</button>
+        <button style={difficulty} type="button" onClick={this.handleClick} name="levelChosen" value="hard">Hard</button>
+        <button style={difficulty} type="button" onClick={this.handleClick} name="levelChosen" value="Any">Any</button>
+        </div>
       </div> 
-      <div>Generate a question
-      {/* <button type="button" onClick={this.generateQuestion} name="questionGenerated">Give me a question!</button> */}
-      </div>
       <div className="questions_wrapper" style={questions_wrapper}>
         <div className="question_options" style={question_options}>
       <div className="questions" style={inner_elements}>
@@ -229,11 +222,18 @@ render () {
       />
       </div>
     </div>
+    <div className="speech-rec" style={inner_elements}>
+      <span>{this.transcript}</span>
+        <button id='microphone-btn' style={button} onClick={this.toggleListen}>START</button>
+        <button id='microphone-btn' style={button} onClick={this.toggleStopListening}>STOP</button>
+        {/* <div id='interim' style={interim}>{interimTranscript} </div> */}
+        <p>You Said</p>
+        <div id='final' style={final}> {finalTranscript}</div>
+      </div>
     <div className="score_speech_rec" style={score_speech_rec}>
       <div className="score-conditions" style={inner_elements}>
       <ScoreConditions
       randomQuestion={randomQuestion}
-      // styles={styles}
       gameFinished={gameFinished}
       questions={questions}
       randomOptions={randomOptions}
@@ -248,17 +248,6 @@ render () {
       endOfGame={this.endOfGame}
       />
       </div>
-
-      <div className="speech-rec" style={inner_elements}>
-      <button onClick={this.resetTranscript}>Reset</button>
-      </div>
-      <span>{this.transcript}</span>
-      <div>
-        <button id='microphone-btn' style={button} onClick={this.toggleListen}>START</button>
-        <button id='microphone-btn' style={button} onClick={this.toggleStopListening}>STOP</button>
-        <div id='interim' style={interim}>{interimTranscript} </div>
-        <div id='final' style={final}>{finalTranscript}</div>
-      </div>
     </div>
   </div>
   </div>
@@ -266,6 +255,7 @@ render () {
 {gameFinished &&
 <div>
   Game is finished
+  <button type="button" onClick={this.handleReset}>Play Again</button>
 </div>
 }
 </div>
@@ -291,10 +281,16 @@ const styles = {
     width: '100vw'
   },
 
+  appWrap: {
+    display: 'flex',
+    height: '100vh',
+  },
+
   questions_wrapper: {
     display: 'flex',
     // flexDirection: 'column',
     width: '100 vw',
+    height: '100vh',
     border: 'solid, black, 2px',
   },
 
@@ -316,6 +312,10 @@ const styles = {
     display: 'flexWrap',
     flexDirection: 'column',
     border: 'solid, black, 2px',
+  },
+
+  difficulty: {
+    margin: '5px'
   },
 
   button: {
@@ -340,9 +340,9 @@ const styles = {
     width: '300px'
   },
 
-  hidden: {
-    display: 'none'
-  }
+  // hidden: {
+  //   display: 'none'
+  // }
 }
 
-const { container, button, interim, final, questions_wrapper, inner_elements, question_options, score_speech_rec, hidden } = styles
+const { container, appWrap, difficulty, button, interim, final, questions_wrapper, inner_elements, question_options, score_speech_rec, hidden } = styles
