@@ -2,11 +2,15 @@ import React, { Component } from 'react'
 // 
 
 class ScoreConditions extends Component {
-    state = {
+  constructor(props) {
+    super(props)
+    this.state = {
       correctAnswer: false,
       gameFinished: false,
       counter: 0
     }
+  }
+  
 
 componentDidMount = () => {
   this.setState({ counter: 0 })
@@ -14,15 +18,15 @@ componentDidMount = () => {
 }    
 
 // uses prev props to check answer against question as the page re-renders when the answer is clicked 
-componentDidUpdate = (prevProps) => {
-const answer = this.props.answerChosen
-console.log(prevProps.randomQuestion)
-if (prevProps.randomQuestion.correct_answer === answer && prevProps.randomQuestion.correct_answer !== this.props.randomQuestion.question) {
-    this.setState(({ counter }) => ({ counter: counter + 1}))
-    // this.checkAnswer()
-  }
+// componentDidUpdate = (prevProps) => {
+// const answer = this.props.answerChosen
+// console.log(prevProps.randomQuestion)
+// if (prevProps.randomQuestion.correct_answer === answer && prevProps.randomQuestion.correct_answer !== this.props.randomQuestion.question) {
+//     this.setState(({ counter }) => ({ counter: counter + 1}))
+//     // this.checkAnswer()
+//   }
  
-}
+// }
 
 // checkAnswer = () => {
 //   // this.setState(({ counter }) => ({ counter: counter + 1}))
@@ -30,14 +34,13 @@ if (prevProps.randomQuestion.correct_answer === answer && prevProps.randomQuesti
 // }
 
 
-endOfGame = () => {
-  console.log('END')
-}
+
 
 render () {
   const { counter } = this.state 
   const { questionCounter } = this.props 
-  // console.log(this.props)
+
+  console.log(this.props)
   return (
     <>
   <h2>hello
