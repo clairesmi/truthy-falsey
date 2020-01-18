@@ -1,8 +1,5 @@
-// Create category selectors (2 filters &&) (Use multi-select from React Select)
 // STYLING
 // Use local storage to save name and score WITH LEADERBOARD AND FORM FOR NAME (maybe at end)
-
-// Must choose level before selecting categories 
 
 // CREATE LOADING SPINNER
 
@@ -10,40 +7,33 @@ import React, { Component } from 'react';
 // import './App.css';
 import axios from 'axios'
 import Select from 'react-select'
-// import Questions from './quiz/Questions'
-import Answers from './quiz/Answers'
-// import ScoreConditions from './quiz/ScoreConditions';
 
 
 class App extends Component {
 
+
 state = {
   questions: '',
   levelChosen: '',
-  categoriesChosen: [],
+  categoriesChosen: null,
+  levelCheck: [],
+  notEnoughQuestions: false,
+  notEnoughInCategory: false,
   score: 0,
   answerChosen: '',
   questionCounter: 0,
-  running: false,
+  running: true,
   randomQuestions: '',
   randomQuestion: '',
   currentQuestion: '',
   options: '',
   nextQuestion: false,
-  totalQuestions: 0
-
+  totalQuestions: 0,
+  displayScore: false,
+  name: ''
 }
+
   categories = [
-    {value: "Any Category", label: "Any Category"},
-    {value: "Entertainment: Video Games", label: "Entertainment: Video Games"},
-    {value: "Entertainment: Film", label: "Entertainment: Film"},
-    {value: "Entertainment: Books", label: "Entertainment: Books"},
-    {value: "Entertainment: Film", label: "Entertainment: Film"},
-    {value: "Entertainment: Music", label: "Entertainment: Music"},
-    {value: "Entertainment: Television", label: "Entertainment: Television"},
-    {value: "Entertainment: Cartoon & Animations", label: "Entertainment: Cartoon & Animations"},
-    {value: "Entertainment: Musicals & Theatres", label: "Entertainment: Musicals & Theatres"},
-    {value: "Entertainment: Japanese Anime & Manga", label: "Entertainment: Japanese Anime & Manga"},
     {value: "Science & Nature", label: "Science & Nature"},
     {value: "Science: Mathematics", label: "Science: Mathematics"},
     {value: "Science: Computers", label: "Science: Computers"},
@@ -56,50 +46,117 @@ state = {
     {value: "Politics", label: "Politics"},
     {value: "History", label: "History"},
     {value: "Celebrities", label: "Celebrities"},
-    {value: "Art", label: "Art"}
+    {value: "Art", label: "Art"},
+    {value: "Entertainment: Video Games", label: "Entertainment: Video Games"},
+    {value: "Entertainment: Film", label: "Entertainment: Film"},
+    {value: "Entertainment: Books", label: "Entertainment: Books"},
+    {value: "Entertainment: Film", label: "Entertainment: Film"},
+    {value: "Entertainment: Music", label: "Entertainment: Music"},
+    {value: "Entertainment: Television", label: "Entertainment: Television"},
+    {value: "Entertainment: Cartoon & Animations", label: "Entertainment: Cartoon & Animations"},
+    {value: "Entertainment: Japanese Anime & Manga", label: "Entertainment: Japanese Anime & Manga"}
   ]
+
+  scoreArray = localStorage.getItem('scores') ? JSON.parse(localStorage.getItem('scores')) : []
+  scoreData = JSON.parse(localStorage.getItem('scores'))
 
 componentDidMount = () => {
   this.nextQuestion()
+  
 }
 
 startGame = () => {
-  this.setState({ running: true })
-  this.setState({ questionCounter: 0})
-  this.setState({ score: 0})
-  console.log(this.state.randomQuestions)
+  console.log(this.state.running)
+  this.setState({ questionCounter: 0, score: 0, totalQuestions: 2, running: !this.state.running,
+    notEnoughInCategory: false, notEnoughQuestions: false })
+  
+  if (!this.state.categoriesChosen && this.state.questions) {
+    this.handleAnyCategory()
+  // this.setQuestions()
+  }
 } 
 
 // HANDLE CLICK FOR SELECTING LEVELS AND ANSWERS
 handleChange = (e) => {
   e.preventDefault()
- this.setState({ [e.target.name]: e.target.value }, () => {
+  this.setState({ [e.target.name]: e.target.value }, () => {
+   const checkingLevel = this.state.questions.filter(question => {
+   return question.difficulty.includes(this.state.levelChosen)
+  })
+    const levelCheck = { ...this.state.levelCheck, checkingLevel}
+    this.setState({ levelCheck }, () => {
+      console.log(this.state.levelCheck.checkingLevel.length)
+      if (this.state.levelCheck.checkingLevel.length < 10) {
+        console.log('less')
+        this.setState({ notEnoughQuestions: !this.state.notEnoughQuestions })
+        console.log(this.state.notEnoughQuestions)
+      }
+    })
  })
 }
 
+chooseAnotherLevel = (e) => {
+  e.preventDefault()
+  this.setState({ notEnoughQuestions: !this.state.notEnoughQuestions, notEnoughInCategory: false}) 
+}
+
+chooseMoreCategories = (e) => {
+  e.preventDefault()
+  this.setState({ notEnoughInCategory: !this.state.notEnoughInCategory, notEnoughQuestions: false})
+}
+
 handleMultiSelect = (selected) => {
+  if (selected) {
 const selectedCategories = selected.map(item => item.value)
 const categoriesChosen = {...this.state.categoriesChosen, selectedCategories}
 this.setState({ categoriesChosen }, () => {
   this.setQuestions()
-  })
+    })
+  }
 }
+
+// if chosen categories - setQuestions else 
+handleAnyCategory = () => {
+    const randomQuestions = this.state.questions.filter(question => {
+        return question.difficulty === this.state.levelChosen
+      })
+    this.setState({ randomQuestions })
+    console.log(randomQuestions.length)
+    if (randomQuestions.length < 10) {
+      this.setState({ notEnoughInCategory: !this.state.notEnoughInCategory})
+    }
+    console.log(this.state.levelCheck)
+
+  const randomQuestion = randomQuestions[Math.floor(Math.random() * randomQuestions.length)]
+  const currentQuestion = randomQuestion ? randomQuestion.question
+  .replace(/&quot;/g, '"').replace(/&#039;/g, "'").replace(/&eacute;/g, 'é').replace(/&amp;/g, '&') : null
+
+  const options = randomQuestion ? randomQuestion.incorrect_answers.concat(randomQuestion.correct_answer).sort((a, b) => b - a) : null
+  this.setState({ randomQuestion, currentQuestion, options })
+
+}
+
 
 // Setting questions once the level and category have been chosen 
 setQuestions = () => {
+  console.log(this.state.questions)
   console.log(this.state.levelChosen)
-  const randomQuestions = this.state.questions.filter(question => {
-    return question.difficulty === this.state.levelChosen && 
-    this.state.categoriesChosen.selectedCategories.includes(question.category)
-  })
-  console.log(randomQuestions)
+  const randomQuestions = this.state.questions.filter(question => 
+      question.difficulty === this.state.levelChosen && 
+      (this.state.categoriesChosen.selectedCategories.includes(question.category))
+    )
+    console.log(randomQuestions.length)
+    if (randomQuestions || randomQuestions.length < 10) {
+      this.setState({ notEnoughInCategory: true})
+    }
+    console.log(this.state.levelCheck)
 
-    const randomQuestion = randomQuestions[Math.floor(Math.random() * randomQuestions.length)]
+  const randomQuestion = randomQuestions[Math.floor(Math.random() * randomQuestions.length)]
 
-  const currentQuestion = randomQuestion.question
-  .replace(/&quot;/g, '"').replace(/&#039;/g, "'").replace(/&eacute;/g, 'é').replace(/&amp;/g, '&')
+  const currentQuestion = randomQuestion ? randomQuestion.question
+  .replace(/&quot;/g, '"').replace(/&#039;/g, "'").replace(/&eacute;/g, 'é').replace(/&amp;/g, '&') : null
 
-  const options = randomQuestion.incorrect_answers.concat(randomQuestion.correct_answer).sort((a, b) => b - a)
+  const options = randomQuestion ? randomQuestion.incorrect_answers.concat(randomQuestion.correct_answer).sort((a, b) => b - a) : null
   this.setState({ randomQuestions, randomQuestion, currentQuestion, options })
 }
 
@@ -112,7 +169,6 @@ nextQuestion = async () => {
   catch (e) {
     console.error(e)
   }
-  // await this.answerCheck()
   this.state.questionCounter === this.state.totalQuestions ? this.endOfGame() :
   this.setState({questionCounter: this.state.questionCounter += 1})
 }
@@ -123,32 +179,42 @@ handleAnswer = (e) => {
     console.log(this.state.answerChosen)
     this.answerCheck()
   })
-  // this.setState(({questionCounter}) => ({questionCounter: questionCounter + 1}))
 }
 
 answerCheck = () => { // need to fix this to call
   console.log(this.state.randomQuestion.correct_answer === this.state.answerChosen, 'CHECKING')
-  this.state.randomQuestion.correct_answer === this.state.answerChosen ? this.setState({score: this.state.score += 1})
+  this.state.randomQuestion.correct_answer === this.state.answerChosen ? this.setState({score: this.state.score + 1})
   : this.setState({ score: this.state.score })
   this.nextQuestion()
   this.setState({answerChosen: ''})
   }
 
 endOfGame = () => {
-  this.setState({ running: !this.state.running })
+  this.setState({ running: !this.state.running, displayScore: true })
   console.log(this.state.running, 'end of game')
+}
+
+handleInput = (e) => {
+  this.setState({ [e.target.name]: e.target.value })
+  console.log(this.state.name, this.state.score)
+}
+
+submitScore = (e) => {
+e.preventDefault()
+this.scoreArray = [...this.scoreArray, {[this.state.name]: this.state.score}]
+console.log(this.scoreArray)
+localStorage.setItem('scores', JSON.stringify(this.scoreArray))
+}
+
+startAgain = () => {
+  this.setState({ displayScore: false, levelChosen: '' })
 }
 
 render () {
   const questions = this.state.questions
-  const { levelChosen, randomQuestions, randomQuestion, currentQuestion, options, score, 
-    questionCounter, answerChosen, running } = this.state
-  // console.log(randomQuestion.difficulty)
-  // console.log(this.categories)
-    
-  console.log(questions)
-  
-  if (!this.state.questions) return null
+  const { levelChosen, notEnoughQuestions, notEnoughInCategory, randomQuestion, 
+    currentQuestion, options, score, questionCounter, answerChosen, running, displayScore, totalQuestions } = this.state
+  if (!questions) return null
   return (
       <>
     <div className="App-wrap">
@@ -160,9 +226,6 @@ render () {
       <div className="question-header">
         <h2>Questions</h2>
       </div>
-      {/* <div className="next-button">
-        <button type="button" onClick={this.nextQuestion} name="levelChosen">Next Question</button>
-      </div> */}
       <div className="questions">
         {currentQuestion} THIS IS THE RANDOM QUESTION
       </div>
@@ -178,7 +241,7 @@ render () {
   }
       </div>
       <div className="answers">
-        {randomQuestion.correct_answer} THIS IS THE CORRECT ANSWER
+        {randomQuestion ? randomQuestion.correct_answer: null} THIS IS THE CORRECT ANSWER
       </div>
       <div className="score">
         {score} YOUR SCORE
@@ -206,65 +269,60 @@ render () {
         <div className="choose-categories">
           <Select 
           isMulti
+          isDisabled={!this.state.levelChosen}
           options={this.categories}
           onChange={this.handleMultiSelect}
+          placeholder={"Any Category"}
           />
         </div>
-        <div className="leaderboard">
-        </div>
+        {/* move leaderboard div to end score */}
+
         <div className="start-game">
-        <button type="button" onClick={this.startGame} name="startGame">Start Game</button>
+        <button type="button" onClick={this.startGame} name="startGame" disabled={!this.state.levelChosen}>Start Game</button>
         </div>
         </>
       }
     </div>
-    </>
-    // <div className="App-wrap">
-//       <header className="App-header" style={container}>
-//       <h1>Truthy or Falsey?</h1>
-//       </header>
-//       <div className="difficulty" style={container}>
-//         <h2>Choose Difficulty</h2>
-//         {/* <button type="button" onClick={this.handleClick} name="levelChosen" value="easy">Easy</button>
-//         <button type="button" onClick={this.handleClick} name="levelChosen" value="medium">Medium</button>
-//         <button type="button" onClick={this.handleClick} name="levelChosen" value="hard">Hard</button>
-//         <button type="button" onClick={this.handleClick} name="levelChosen" value="Any">Any</button> */}
-//         <button type="button" onClick={this.nextQuestion} name="levelChosen">Next Question</button>
-//       </div>  
-//       {questions &&
-//       <div className="questions_wrapper" style={questions_wrapper}>
-//       <div>correct{randomQuestion.correct_answer} chosen{answerChosen}</div>
-//         <div className="question_options" style={question_options}>
-//       <div className="questions" style={inner_elements}>
-//       <Questions 
-//       randomQuestion={randomQuestion}
-//       // styles={styles}
-//       />
-//       </div>
-//       <div className="answers" style={inner_elements}>
-//       </div>
-//     </div>
-//     <div className="score_speech_rec" style={score_speech_rec}>
-//       <div className="score-conditions" style={inner_elements}>
-//       <ScoreConditions
-//       randomQuestion={randomQuestion}
-//       counter={counter}
-//       // styles={styles}
-//       questions={questions}
-//       randomOptions={randomOptions}
-//       handleClick={this.handleAnswerClick}
-//       answerChosen={answerChosen}
-//       questionCounter={questionCounter}
-//       endOfGame={this.endOfGame}
-//       />
-//       </div>
-//     </div>
-//   </div>
-//   }
-// </div>
+    {notEnoughQuestions &&
+      <div>
+        <p>
+          Oops, we don't have enough questions, please choose a different level! 
+        </p>
+        <button type="button" onClick={this.chooseAnotherLevel} name="chooseAnotherLevel">OK</button>
+      </div>
+    }
+     {notEnoughInCategory &&
+      <div>
+        <p>
+          Oops, we don't have enough questions in that category, please select another! 
+        </p>
+        <button type="button" onClick={this.chooseMoreCategories} name="chooseAnotherLevel">OK</button>
+      </div>
+    }
+         {displayScore && totalQuestions !== 0 &&
+          <div>
+            <p>
+               You scored: {score}
+            </p>
+            <button type="button" onClick={this.startAgain} name="startAgain">Start Again</button>
+            <div className="leaderboard"> 
+          <form>
+            <input placeholder="Enter your name" name="name" onChange={this.handleInput}></input>
+          <button type="button" onClick={this.submitScore}>Submit</button>
+          </form>
+          <div className="player-name">
+            <h3>Latest Scores</h3>
+          {this.scoreData ? this.scoreData.slice(-3).map(item => Object.keys(item)) : null}
+            </div>
+            <div className="playere-score">
+            {this.scoreData ? this.scoreData.slice(-3).map(item => Object.values(item)) : null}
+          </div>
+        </div>
+          </div>
+        }
+        </>
     )
   }
-// write if statements for type of question - boolean or multiple choice 
 }
 export default App
 
@@ -324,4 +382,3 @@ const styles = {
   }
 }
 const { container, button, interim, final, questions_wrapper, inner_elements, question_options, score_speech_rec } = styles
-
