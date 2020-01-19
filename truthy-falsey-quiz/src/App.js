@@ -1,5 +1,8 @@
 // STYLING
-// Use local storage to save name and score WITH LEADERBOARD AND FORM FOR NAME (maybe at end)
+
+// Modals - 
+// WHEN NOT ENOUGHT Qs 
+// WHEN ENTERING NAME IN SCORE BOARD
 
 // CREATE LOADING SPINNER
 
@@ -58,7 +61,7 @@ state = {
   ]
 
   scoreArray = localStorage.getItem('scores') ? JSON.parse(localStorage.getItem('scores')) : []
-  scoreData = JSON.parse(localStorage.getItem('scores'))
+  scoreData = localStorage.getItem('scores') ? JSON.parse(localStorage.getItem('scores')) : []
 
 componentDidMount = () => {
   this.nextQuestion()
@@ -68,11 +71,12 @@ componentDidMount = () => {
 startGame = () => {
   console.log(this.state.running)
   this.setState({ questionCounter: 0, score: 0, totalQuestions: 2, running: !this.state.running,
-    notEnoughInCategory: false, notEnoughQuestions: false })
+    notEnoughInCategory: false, notEnoughQuestions: false, displayScore: false })
   
   if (!this.state.categoriesChosen && this.state.questions) {
     this.handleAnyCategory()
-  // this.setQuestions()
+  // console.log(this.state.displayScore)
+
   }
 } 
 
@@ -181,7 +185,7 @@ handleAnswer = (e) => {
   })
 }
 
-answerCheck = () => { // need to fix this to call
+answerCheck = () => {
   console.log(this.state.randomQuestion.correct_answer === this.state.answerChosen, 'CHECKING')
   this.state.randomQuestion.correct_answer === this.state.answerChosen ? this.setState({score: this.state.score + 1})
   : this.setState({ score: this.state.score })
@@ -200,10 +204,13 @@ handleInput = (e) => {
 }
 
 submitScore = (e) => {
-e.preventDefault()
-this.scoreArray = [...this.scoreArray, {[this.state.name]: this.state.score}]
+this.scoreArray = [...this.scoreArray, {'name': this.state.name, 'score': this.state.score}]
+.sort((a, b) => b.score - a.score).slice(0, 5)
 console.log(this.scoreArray)
 localStorage.setItem('scores', JSON.stringify(this.scoreArray))
+this.setState({ [e.target.name]: ''})
+const input = document.querySelector('.input')
+input.value = ''
 }
 
 startAgain = () => {
@@ -213,8 +220,11 @@ startAgain = () => {
 render () {
   const questions = this.state.questions
   const { levelChosen, notEnoughQuestions, notEnoughInCategory, randomQuestion, 
-    currentQuestion, options, score, questionCounter, answerChosen, running, displayScore, totalQuestions } = this.state
+    currentQuestion, options, score, questionCounter, answerChosen, 
+    running, displayScore, totalQuestions } = this.state
   if (!questions) return null
+  // console.log(this.scoreArray)
+
   return (
       <>
     <div className="App-wrap">
@@ -256,8 +266,14 @@ render () {
         <div className="start-screen">
           Truthy or Falsey
         </div>
-        <div className="your-score">
-        </div>
+        <div className="score-board">
+            <h3>Latest Scores</h3>
+          {this.scoreData ? this.scoreData.map(item => 
+          <div key={item.name}>
+            {item.name} {item.score}
+            </div>
+            ) : null}
+            </div>
         <div className="choose-level">
         <select name="levelChosen" value={levelChosen} onChange={this.handleChange}>
           <option value="" disabled>Choose your level</option> 
@@ -304,19 +320,13 @@ render () {
             <p>
                You scored: {score}
             </p>
+            {/* this will be a modal  */}
             <button type="button" onClick={this.startAgain} name="startAgain">Start Again</button>
             <div className="leaderboard"> 
           <form>
-            <input placeholder="Enter your name" name="name" onChange={this.handleInput}></input>
-          <button type="button" onClick={this.submitScore}>Submit</button>
+            <input className="input" placeholder="Enter your name" name="name" onChange={this.handleInput}></input>
+          <button onClick={this.submitScore}>Submit</button>
           </form>
-          <div className="player-name">
-            <h3>Latest Scores</h3>
-          {this.scoreData ? this.scoreData.slice(-3).map(item => Object.keys(item)) : null}
-            </div>
-            <div className="playere-score">
-            {this.scoreData ? this.scoreData.slice(-3).map(item => Object.values(item)) : null}
-          </div>
         </div>
           </div>
         }
