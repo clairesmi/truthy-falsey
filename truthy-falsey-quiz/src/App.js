@@ -6,10 +6,14 @@
 
 // CREATE LOADING SPINNER
 
-import React, { Component } from 'react';
+import React, { Component } from 'react'
 // import './App.css';
 import axios from 'axios'
-import Select from 'react-select'
+// import Select from 'react-select'
+import GameRunning from './quiz/GameRunning'
+import StartScreen from './quiz/StartScreen'
+import QuestionSelection from './quiz/QuestionSelection'
+import FinalScore from './quiz/FinalScore'
 
 
 class App extends Component {
@@ -69,8 +73,8 @@ componentDidMount = () => {
 }
 
 startGame = () => {
-  console.log(this.state.running)
-  this.setState({ questionCounter: 0, score: 0, totalQuestions: 2, running: !this.state.running,
+  // console.log(this.state.running)
+  this.setState({ questionCounter: 0, score: 0, totalQuestions: 5, running: !this.state.running,
     notEnoughInCategory: false, notEnoughQuestions: false, displayScore: false })
   
   if (!this.state.categoriesChosen && this.state.questions) {
@@ -89,11 +93,11 @@ handleChange = (e) => {
   })
     const levelCheck = { ...this.state.levelCheck, checkingLevel}
     this.setState({ levelCheck }, () => {
-      console.log(this.state.levelCheck.checkingLevel.length)
+      // console.log(this.state.levelCheck.checkingLevel.length)
       if (this.state.levelCheck.checkingLevel.length < 10) {
-        console.log('less')
+        // console.log('less')
         this.setState({ notEnoughQuestions: !this.state.notEnoughQuestions })
-        console.log(this.state.notEnoughQuestions)
+        // console.log(this.state.notEnoughQuestions)
       }
     })
  })
@@ -143,24 +147,23 @@ handleAnyCategory = () => {
 
 // Setting questions once the level and category have been chosen 
 setQuestions = () => {
-  console.log(this.state.questions)
-  console.log(this.state.levelChosen)
+  // console.log(this.state.questions)
+  // console.log(this.state.levelChosen)
   const randomQuestions = this.state.questions.filter(question => 
       question.difficulty === this.state.levelChosen && 
       (this.state.categoriesChosen.selectedCategories.includes(question.category))
     )
-    console.log(randomQuestions.length)
-    if (randomQuestions || randomQuestions.length < 10) {
+    // console.log(randomQuestions.length)
+    if (!randomQuestions || randomQuestions.length < 5) {
       this.setState({ notEnoughInCategory: true})
     }
-    console.log(this.state.levelCheck)
+    // console.log(this.state.levelCheck)
 
   const randomQuestion = randomQuestions[Math.floor(Math.random() * randomQuestions.length)]
-
   const currentQuestion = randomQuestion ? randomQuestion.question
   .replace(/&quot;/g, '"').replace(/&#039;/g, "'").replace(/&eacute;/g, 'é').replace(/&amp;/g, '&') : null
-
   const options = randomQuestion ? randomQuestion.incorrect_answers.concat(randomQuestion.correct_answer).sort((a, b) => b - a) : null
+  
   this.setState({ randomQuestions, randomQuestion, currentQuestion, options })
 }
 
@@ -219,117 +222,59 @@ startAgain = () => {
 
 render () {
   const questions = this.state.questions
+  if (!questions) return null
   const { levelChosen, notEnoughQuestions, notEnoughInCategory, randomQuestion, 
     currentQuestion, options, score, questionCounter, answerChosen, 
     running, displayScore, totalQuestions } = this.state
-  if (!questions) return null
-  // console.log(this.scoreArray)
+
+    console.log(this.state.randomQuestions)
 
   return (
       <>
     <div className="App-wrap">
-      {running &&
-      <>
-      <header className="App-header" style={container}>
-        <h1>Truthy or Falsey?</h1>
-      </header>
-      <div className="question-header">
-        <h2>Questions</h2>
-      </div>
-      <div className="questions">
-        {currentQuestion} THIS IS THE RANDOM QUESTION
-      </div>
-      <div className="options">
-  <h2>Options:</h2>
-  {currentQuestion &&
-  <select name="answerChosen" onChange={this.handleAnswer} value={answerChosen}>
-    <option value="" disabled>Choose your answer</option>
-      {options.map(option => 
-         <option key={option} value={option}>{option}</option>
-      )}
-  </select>
-  }
-      </div>
-      <div className="answers">
-        {randomQuestion ? randomQuestion.correct_answer: null} THIS IS THE CORRECT ANSWER
-      </div>
-      <div className="score">
-        {score} YOUR SCORE
-      </div>
-      <div className="question-counter">
-        {questionCounter} THIS IS THE QUESTION COUNTER
-      </div>
-      </>
-      }
-      {!running &&
-      <>
-        <div className="start-screen">
-          Truthy or Falsey
-        </div>
-        <div className="score-board">
-            <h3>Latest Scores</h3>
-          {this.scoreData ? this.scoreData.map(item => 
-          <div key={item.name}>
-            {item.name} {item.score}
-            </div>
-            ) : null}
-            </div>
-        <div className="choose-level">
-        <select name="levelChosen" value={levelChosen} onChange={this.handleChange}>
-          <option value="" disabled>Choose your level</option> 
-          <option value="easy">Easy</option>
-          <option value="medium">Medium</option>
-          <option value="hard">Hard</option>
-        </select>
-        </div>
-        <div className="choose-categories">
-          <Select 
-          isMulti
-          isDisabled={!this.state.levelChosen}
-          options={this.categories}
-          onChange={this.handleMultiSelect}
-          placeholder={"Any Category"}
-          />
-        </div>
-        {/* move leaderboard div to end score */}
 
-        <div className="start-game">
-        <button type="button" onClick={this.startGame} name="startGame" disabled={!this.state.levelChosen}>Start Game</button>
-        </div>
-        </>
-      }
+      <GameRunning
+      running={running}
+      currentQuestion={currentQuestion}
+      answerChosen={answerChosen}
+      options={options}
+      randomQuestion={randomQuestion}
+      score={score}
+      questionCounter={questionCounter}
+      styles={styles}
+      handleAnswer={this.handleAnswer}
+      />
+
+      <StartScreen
+      styles={styles}
+      levelChosen={levelChosen}
+      categories={this.categories}
+      scoreArray={this.scoreArray}
+      scoreData={this.scoreData}
+      handleChange={this.handleChange}
+      handleMultiSelect={this.handleMultiSelect}
+      startGame={this.startGame}
+      />
+
     </div>
-    {notEnoughQuestions &&
-      <div>
-        <p>
-          Oops, we don't have enough questions, please choose a different level! 
-        </p>
-        <button type="button" onClick={this.chooseAnotherLevel} name="chooseAnotherLevel">OK</button>
-      </div>
-    }
-     {notEnoughInCategory &&
-      <div>
-        <p>
-          Oops, we don't have enough questions in that category, please select another! 
-        </p>
-        <button type="button" onClick={this.chooseMoreCategories} name="chooseAnotherLevel">OK</button>
-      </div>
-    }
-         {displayScore && totalQuestions !== 0 &&
-          <div>
-            <p>
-               You scored: {score}
-            </p>
-            {/* this will be a modal  */}
-            <button type="button" onClick={this.startAgain} name="startAgain">Start Again</button>
-            <div className="leaderboard"> 
-          <form>
-            <input className="input" placeholder="Enter your name" name="name" onChange={this.handleInput}></input>
-          <button onClick={this.submitScore}>Submit</button>
-          </form>
-        </div>
-          </div>
-        }
+
+    <QuestionSelection 
+    styles={styles}
+    chooseAnotherLevel={this.chooseAnotherLevel}
+    chooseMoreCategories={this.chooseMoreCategories}
+    notEnoughQuestions={notEnoughQuestions}
+    notEnoughInCategory={notEnoughInCategory}
+    running={running}
+    />
+
+    <FinalScore 
+    displayScore={displayScore}
+    totalQuestions={totalQuestions}
+    score={score}
+    startAgain={this.startAgain}
+    handleInput={this.handleInput}
+    submitScore={this.submitScore}
+    />
         </>
     )
   }
@@ -344,6 +289,11 @@ const styles = {
     textAlign: 'center',
     border: 'solid black 2px',
     width: '100vw'
+  },
+
+  startScreen: {
+    fontFamily: 'Londrina Outline, cursive',
+    // color: 'yellow',
   },
   questions_wrapper: {
     display: 'flex',
@@ -391,4 +341,4 @@ const styles = {
     width: '300px'
   }
 }
-const { container, button, interim, final, questions_wrapper, inner_elements, question_options, score_speech_rec } = styles
+const { container, startScreen, button, interim, final, questions_wrapper, inner_elements, question_options, score_speech_rec } = styles
