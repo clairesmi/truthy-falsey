@@ -1,18 +1,16 @@
 import React from 'react'
 
-const FinalScore = ({ displayScore, totalQuestions, score, startAgain, handleInput, submitScore}) => (
+const FinalScore = ({ displayScore, totalQuestions, score, handleInput, submitScore, styles}) => (
   <>
   {displayScore && totalQuestions !== 0 &&
     <div>
-      <p>
+      <div style={styles.questionsHeader}>
          You scored: {score}
-      </p>
-      {/* this will be a modal  */}
-      <button type="button" onClick={startAgain} name="startAgain">Start Again</button>
+      </div>
       <div className="leaderboard"> 
     <form>
-      <input className="input" placeholder="Enter your name" name="name" onChange={handleInput}></input>
-    <button onClick={submitScore}>Submit</button>
+      <input style={styles.inputName} className="input" placeholder="Enter your name" name="name" onChange={handleInput}></input>
+    <button style={styles.startButton} onClick={submitScore}>Submit</button>
     </form>
   </div>
     </div>

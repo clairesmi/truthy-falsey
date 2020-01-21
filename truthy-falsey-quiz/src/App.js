@@ -9,15 +9,12 @@
 import React, { Component } from 'react'
 // import './App.css';
 import axios from 'axios'
-// import Select from 'react-select'
 import GameRunning from './quiz/GameRunning'
 import StartScreen from './quiz/StartScreen'
 import QuestionSelection from './quiz/QuestionSelection'
 import FinalScore from './quiz/FinalScore'
 
-
 class App extends Component {
-
 
 state = {
   questions: '',
@@ -57,24 +54,22 @@ state = {
     {value: "Entertainment: Video Games", label: "Entertainment: Video Games"},
     {value: "Entertainment: Film", label: "Entertainment: Film"},
     {value: "Entertainment: Books", label: "Entertainment: Books"},
-    {value: "Entertainment: Film", label: "Entertainment: Film"},
     {value: "Entertainment: Music", label: "Entertainment: Music"},
     {value: "Entertainment: Television", label: "Entertainment: Television"},
     {value: "Entertainment: Cartoon & Animations", label: "Entertainment: Cartoon & Animations"},
     {value: "Entertainment: Japanese Anime & Manga", label: "Entertainment: Japanese Anime & Manga"}
   ]
 
-  scoreArray = localStorage.getItem('scores') ? JSON.parse(localStorage.getItem('scores')) : []
-  scoreData = localStorage.getItem('scores') ? JSON.parse(localStorage.getItem('scores')) : []
+scoreArray = localStorage.getItem('scores') ? JSON.parse(localStorage.getItem('scores')) : []
+scoreData = localStorage.getItem('scores') ? JSON.parse(localStorage.getItem('scores')) : []
 
-componentDidMount = () => {
+componentDidMount () {
   this.nextQuestion()
-  
 }
 
 startGame = () => {
   // console.log(this.state.running)
-  this.setState({ questionCounter: 0, score: 0, totalQuestions: 5, running: !this.state.running,
+  this.setState({ questionCounter: 1, score: 0, totalQuestions: 5, running: true,
     notEnoughInCategory: false, notEnoughQuestions: false, displayScore: false })
   
   if (!this.state.categoriesChosen && this.state.questions) {
@@ -105,7 +100,8 @@ handleChange = (e) => {
 
 chooseAnotherLevel = (e) => {
   e.preventDefault()
-  this.setState({ notEnoughQuestions: !this.state.notEnoughQuestions, notEnoughInCategory: false}) 
+  this.setState({ notEnoughQuestions: !this.state.notEnoughQuestions, 
+    notEnoughInCategory: false, levelChosen: '' }) 
 }
 
 chooseMoreCategories = (e) => {
@@ -147,8 +143,6 @@ handleAnyCategory = () => {
 
 // Setting questions once the level and category have been chosen 
 setQuestions = () => {
-  // console.log(this.state.questions)
-  // console.log(this.state.levelChosen)
   const randomQuestions = this.state.questions.filter(question => 
       question.difficulty === this.state.levelChosen && 
       (this.state.categoriesChosen.selectedCategories.includes(question.category))
@@ -157,7 +151,6 @@ setQuestions = () => {
     if (!randomQuestions || randomQuestions.length < 5) {
       this.setState({ notEnoughInCategory: true})
     }
-    // console.log(this.state.levelCheck)
 
   const randomQuestion = randomQuestions[Math.floor(Math.random() * randomQuestions.length)]
   const currentQuestion = randomQuestion ? randomQuestion.question
@@ -176,8 +169,10 @@ nextQuestion = async () => {
   catch (e) {
     console.error(e)
   }
-  this.state.questionCounter === this.state.totalQuestions ? this.endOfGame() :
-  this.setState({questionCounter: this.state.questionCounter += 1})
+  if (this.state.questionCounter === this.state.totalQuestions) {
+    this.endOfGame() 
+  }
+  // this.setQuestions()
 }
 
 handleAnswer = (e) => {
@@ -190,10 +185,17 @@ handleAnswer = (e) => {
 
 answerCheck = () => {
   console.log(this.state.randomQuestion.correct_answer === this.state.answerChosen, 'CHECKING')
+
   this.state.randomQuestion.correct_answer === this.state.answerChosen ? this.setState({score: this.state.score + 1})
   : this.setState({ score: this.state.score })
-  this.nextQuestion()
-  this.setState({answerChosen: ''})
+
+  this.state.selectedCategories ? this.nextQuestion() : this.handleAnyCategory()
+
+  this.setState({answerChosen: '', questionCounter: this.state.questionCounter + 1})
+
+  if (this.state.questionCounter === this.state.totalQuestions) {
+    this.endOfGame() 
+    }
   }
 
 endOfGame = () => {
@@ -214,6 +216,7 @@ localStorage.setItem('scores', JSON.stringify(this.scoreArray))
 this.setState({ [e.target.name]: ''})
 const input = document.querySelector('.input')
 input.value = ''
+this.startAgain()
 }
 
 startAgain = () => {
@@ -226,56 +229,59 @@ render () {
   const { levelChosen, notEnoughQuestions, notEnoughInCategory, randomQuestion, 
     currentQuestion, options, score, questionCounter, answerChosen, 
     running, displayScore, totalQuestions } = this.state
-
-    console.log(this.state.randomQuestions)
-
+    console.log(running)
   return (
       <>
-    <div className="App-wrap">
+        <div className="app-wrapper" style={!displayScore && !notEnoughQuestions && !notEnoughInCategory ? container: outerModal}>
+          {running &&
+          <GameRunning
+          styles={styles}
+          running={running}
+          currentQuestion={currentQuestion}
+          answerChosen={answerChosen}
+          options={options}
+          randomQuestion={randomQuestion}
+          score={score}
+          questionCounter={questionCounter}
+          handleAnswer={this.handleAnswer}
+          />
+          }
 
-      <GameRunning
-      running={running}
-      currentQuestion={currentQuestion}
-      answerChosen={answerChosen}
-      options={options}
-      randomQuestion={randomQuestion}
-      score={score}
-      questionCounter={questionCounter}
-      styles={styles}
-      handleAnswer={this.handleAnswer}
-      />
-
-      <StartScreen
-      styles={styles}
-      levelChosen={levelChosen}
-      categories={this.categories}
-      scoreArray={this.scoreArray}
-      scoreData={this.scoreData}
-      handleChange={this.handleChange}
-      handleMultiSelect={this.handleMultiSelect}
-      startGame={this.startGame}
-      />
-
-    </div>
-
-    <QuestionSelection 
-    styles={styles}
-    chooseAnotherLevel={this.chooseAnotherLevel}
-    chooseMoreCategories={this.chooseMoreCategories}
-    notEnoughQuestions={notEnoughQuestions}
-    notEnoughInCategory={notEnoughInCategory}
-    running={running}
-    />
-
-    <FinalScore 
-    displayScore={displayScore}
-    totalQuestions={totalQuestions}
-    score={score}
-    startAgain={this.startAgain}
-    handleInput={this.handleInput}
-    submitScore={this.submitScore}
-    />
-        </>
+          {!running &&
+          <StartScreen
+          styles={styles}
+          levelChosen={levelChosen}
+          categories={this.categories}
+          scoreArray={this.scoreArray}
+          scoreData={this.scoreData}
+          handleChange={this.handleChange}
+          handleMultiSelect={this.handleMultiSelect}
+          startGame={this.startGame}
+          />
+          }
+          <div style={notEnoughQuestions || notEnoughInCategory ? innerModal: null}>
+          <QuestionSelection 
+          styles={styles}
+          chooseAnotherLevel={this.chooseAnotherLevel}
+          chooseMoreCategories={this.chooseMoreCategories}
+          notEnoughQuestions={notEnoughQuestions}
+          notEnoughInCategory={notEnoughInCategory}
+          running={running}
+          />
+          </div>
+          <div style={displayScore && totalQuestions !== 0 ? innerModal: null}>
+          <FinalScore 
+          styles={styles}
+          displayScore={displayScore}
+          totalQuestions={totalQuestions}
+          score={score}
+          startAgain={this.startAgain}
+          handleInput={this.handleInput}
+          submitScore={this.submitScore}
+          />
+          </div>
+        </div>
+      </>
     )
   }
 }
@@ -283,18 +289,122 @@ export default App
 
 const styles = {
   container: {
+    background: 'url(https://cdn.hipwallpaper.com/i/50/52/ZG9Ntj.jpg)',
+    // backgroundSize: 'cover',
+    backgroundRepeat: 'no-repeat',
     display: 'flex',
     flexDirection: 'column',
-    alignItems: 'center',
-    textAlign: 'center',
-    border: 'solid black 2px',
-    width: '100vw'
+    alignItems: 'flexStart',
+    textAlign: 'left',
+    // border: 'solid black 2px',
+    width: '100vw',
+    height: '100vh',
+    // paddingRight: '20px'
+  },
+
+  h1: {
+    marginBottom: '0px',
+    marginTop: '20px',
+    // marginLeft: '10px',
+    paddingTop: '40px',
+    fontFamily: 'Londrina Outline, cursive',
+    fontSize: '80px',
+    textAlign: 'center'
   },
 
   startScreen: {
     fontFamily: 'Londrina Outline, cursive',
-    // color: 'yellow',
+    fontSize: '80px',
+    paddingLeft: '50px',
+    paddingRight: '20px',
+    paddingTop: '30px'
   },
+
+  startScreenWrapper: {
+    display: 'flex',
+    // border: 'solid black 1px',
+    width: '100vw',
+  },
+
+  playerOptions: {
+    display: 'flex',
+    flexDirection: 'column',
+    flexBasis: '70%',
+    alignItems: 'center',
+    // border: 'solid black 1px',
+    height: '70vh',
+    justifyContent: 'center'
+  },
+
+  select : {
+    height: '40px',
+    width: '800px',
+    fontFamily: 'Roboto, sans-serif',
+    fontSize: '25px',
+    marginTop: '30px',
+    marginBottom: '20px',
+    padding: '20px'
+  },
+
+  multiSelect: {
+    height: '40px',
+    width: '800px',
+    fontFamily: 'Roboto, sans-serif',
+    fontSize: '25px',
+    margin: '10px'
+  },
+
+  startButton: {
+    height: '40px',
+    width: '200px',
+    borderRadius: '5px',
+    fontSize: '25px',
+    marginTop: '80px',
+    zIndex: '1',
+    opacity: '1.0',
+  },
+
+  scoreBoard: {
+    flexBasis: '30%',
+    fontFamily: 'Londrina Outline, cursive',
+    fontSize: '40px',
+    textAlign: 'left',
+    height: '70vh',
+    paddingLeft: '100px',
+    marginLeft: '10px'
+  },
+
+  gameWrapper: {
+    display: 'flex',
+    flexDirection: 'column',
+    height: '80vh',
+    // paddingLeft: '60px',
+    paddingRight: '60px',
+    paddingTop: '30px',
+    marginLeft: '20px'
+  },
+
+  questionsHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    fontFamily: 'Londrina Outline, cursive',
+    fontSize: '50px',
+    letterSpacing: '1px',
+    textAlign: 'center',
+  },
+
+  questionStyle: {
+    height: '40px',
+    width: '800px',
+    fontFamily: 'Roboto, sans-serif',
+    fontSize: '25px',
+    marginTop: '10px',
+    marginBottom: '10px',
+    marginLeft: '5px',
+    paddingTop: '20px',
+    paddingBottom: '25px'
+  },
+
   questions_wrapper: {
     display: 'flex',
     flexDirection: 'column',
@@ -302,43 +412,49 @@ const styles = {
     width: '100 vw',
     border: 'solid, black, 2px',
   },
-  question_options: {
-    display: 'flexWrap',
-    flexBasis: '50%',
-    border: 'solid, black, 2px',
-    background: 'pink'
-  },
-  score_speech_rec: {
-    display: 'flexWrap',
-    flexBasis: '50%',
-    border: 'solid, black, 2px',
-    background: 'azure'
-  },
-  inner_elements: {
-    display: 'flexWrap',
+
+  outerModal: {
+    display: 'flex',
     flexDirection: 'column',
-    border: 'solid, black, 2px',
+    alignItems: 'center',
+    margin: '0px',
+    background: 'url(https://cdn.hipwallpaper.com/i/50/52/ZG9Ntj.jpg)',
+    // backgroundSize: 'cover',
+    backgroundRepeat: 'no-repeat',
+    zIndex: '1',
+    height: '100vh',
+    // opacity: '0.5'
   },
-  button: {
-    width: '60px',
-    height: '60px',
-    background: 'lightblue',
-    borderRadius: '50%',
-    margin: '6em 0 2em 0'
+
+  innerModal: {
+    display: 'flex',
+    height: '60vh',
+    width: '50vw',
+    position: 'absolute',
+    padding: '50px',
+    paddingBottom: '0px',
+    backgroundColor: 'grey',
+    opacity: '0.8',
+    border: 'solid grey 1px',
+    marginTop: '200px',
+    zIndex: '2',
+    boxShadow: '0px 2px 10px 0px',
+    textAlign: 'center',
+    fontFamily: 'Roboto, sans-serif',
+    fontSize: '30px',
+    fontWeight: 'light',
+    color: 'black'
   },
-  interim: {
-    color: 'gray',
-    border: '#ccc 1px solid',
-    padding: '1em',
-    margin: '1em',
-    width: '300px'
+
+  inputName : {
+    height: '40px',
+    width: '500px',
+    fontFamily: 'Roboto, sans-serif',
+    fontSize: '25px',
+    marginTop: '30px',
+    marginBottom: '20px',
+    padding: '20px'
   },
-  final: {
-    color: 'black',
-    border: '#ccc 1px solid',
-    padding: '1em',
-    margin: '1em',
-    width: '300px'
-  }
+
 }
-const { container, startScreen, button, interim, final, questions_wrapper, inner_elements, question_options, score_speech_rec } = styles
+const { container, outerModal, innerModal } = styles
