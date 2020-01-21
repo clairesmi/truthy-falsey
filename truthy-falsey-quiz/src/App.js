@@ -1,11 +1,3 @@
-// STYLING
-
-// Modals - 
-// WHEN NOT ENOUGHT Qs 
-// WHEN ENTERING NAME IN SCORE BOARD
-
-// CREATE LOADING SPINNER
-
 import React, { Component } from 'react'
 // import './App.css';
 import axios from 'axios'
@@ -216,11 +208,6 @@ localStorage.setItem('scores', JSON.stringify(this.scoreArray))
 this.setState({ [e.target.name]: ''})
 const input = document.querySelector('.input')
 input.value = ''
-this.startAgain()
-}
-
-startAgain = () => {
-  this.setState({ displayScore: false, levelChosen: '' })
 }
 
 render () {
@@ -229,7 +216,6 @@ render () {
   const { levelChosen, notEnoughQuestions, notEnoughInCategory, randomQuestion, 
     currentQuestion, options, score, questionCounter, answerChosen, 
     running, displayScore, totalQuestions } = this.state
-    console.log(running)
   return (
       <>
         <div className="app-wrapper" style={!displayScore && !notEnoughQuestions && !notEnoughInCategory ? container: outerModal}>
@@ -419,11 +405,9 @@ const styles = {
     alignItems: 'center',
     margin: '0px',
     background: 'url(https://cdn.hipwallpaper.com/i/50/52/ZG9Ntj.jpg)',
-    // backgroundSize: 'cover',
     backgroundRepeat: 'no-repeat',
     zIndex: '1',
     height: '100vh',
-    // opacity: '0.5'
   },
 
   innerModal: {

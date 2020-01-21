@@ -9,7 +9,8 @@ const FinalScore = ({ displayScore, totalQuestions, score, handleInput, submitSc
       </div>
       <div className="leaderboard"> 
     <form>
-      <input style={styles.inputName} className="input" placeholder="Enter your name" name="name" onChange={handleInput}></input>
+      <input style={styles.inputName} className="input" placeholder="Enter your name" name="name" 
+      onChange={handleInput}></input>
     <button style={styles.startButton} onClick={submitScore}>Submit</button>
     </form>
   </div>
