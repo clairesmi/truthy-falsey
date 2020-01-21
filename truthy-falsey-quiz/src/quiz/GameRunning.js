@@ -9,7 +9,7 @@ score, questionCounter, styles, handleAnswer }) => (
         <h1 style={styles.h1}>Truthy or Falsey?</h1>
       </header>
       <div className="questions-header" style={styles.questionsHeader}>
-        <h2 style={styles.questionsHeader}>Question {questionCounter} </h2>
+        <h2 style={styles.questionsHeader}>Question {questionCounter} of 5 </h2>
         <h2 style={styles.questionsHeader}>Points scored: {score}</h2>
       </div>
       <div className="questions" style={styles.questionStyle}>
